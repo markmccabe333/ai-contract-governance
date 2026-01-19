@@ -1,4 +1,5 @@
-[Note to Practitioners: This template is intended to be attached as an Exhibit to a Master Services Agreement (MSA) or Statement of Work (SOW). The provisions of this Exhibit are operative only as incorporated into a binding agreement. This note is explanatory and does not modify the legal effect of the Exhibit. For a detailed breakdown of the technical categories in Section 2 (Dataset Composition), please refer to the "Golden Dataset" Glossary for Legal & Technical Alignment at the end of this document.]
+[Note to Practitioners: This template is intended to be attached as an Exhibit to a Master Services Agreement (MSA) or Statement of Work (SOW). The provisions of this Exhibit are operative only as incorporated into a binding agreement. This note is explanatory and does not modify the legal effect of the Exhibit. For a detailed breakdown of the technical categories in Section 2 (Dataset Composition), please refer to the "Golden Dataset" Glossary for Legal & Technical Alignment at the end of this document. This Exhibit is provided for general informational purposes and does not
+constitute legal advice.]
 
 ________________________________________
 Exhibit [X]: Golden Dataset & Performance Specification
