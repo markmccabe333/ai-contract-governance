@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Training Data Legislation Tracker — Disclosure Without Rights</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #040810;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 28px 16px;
+  }
+
+  .wrap { max-width: 1420px; margin: 0 auto; }
+
+  .eyebrow {
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: #334155; font-family: 'Courier New', monospace; margin-bottom: 6px;
+  }
+  h1 {
+    font-size: 26px; font-weight: 700; color: #f1f5f9;
+    letter-spacing: -.02em; margin-bottom: 4px;
+  }
+  .subtitle { font-size: 13px; color: #475569; font-style: italic; margin-bottom: 24px; }
+
+  /* Controls */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center; margin-bottom: 18px;
+  }
+  .controls input, .controls select {
+    padding: 9px 13px; border-radius: 6px;
+    border: 1px solid #1e293b; background: #0a1120;
+    color: #e2e8f0; font-size: 13px; font-family: Georgia, serif;
+    outline: none;
+  }
+  .controls input { flex: 1 1 300px; }
+  .controls select { cursor: pointer; }
+  .count {
+    font-size: 12px; color: #334155;
+    font-family: 'Courier New', monospace; padding: 0 4px;
+  }
+  .count span { color: #60a5fa; font-weight: 700; }
+
+  /* Table wrapper */
+  .tbl-wrap {
+    overflow-x: auto; border-radius: 8px;
+    border: 1px solid #1a2540;
+    box-shadow: 0 4px 32px rgba(0,0,0,.5);
+  }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    background: #070d1a;
+  }
+
+  thead th {
+    padding: 11px 14px; text-align: left;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: .09em; text-transform: uppercase;
+    color: #64748b; cursor: pointer; user-select: none;
+    border-bottom: 1px solid #1e293b;
+    background: #070d1a; white-space: nowrap;
+  }
+  thead th:hover { color: #94a3b8; }
+  thead th .sort-icon { margin-left: 4px; font-size: 9px; opacity: .3; }
+  thead th.active .sort-icon { opacity: 1; }
+
+  tbody tr.data-row {
+    cursor: pointer; transition: background .12s;
+  }
+  tbody tr.data-row:hover { background: #0a1525 !important; }
+  tbody tr.data-row.open { background: #0d1930; }
+
+  td {
+    padding: 10px 14px; vertical-align: top;
+    border-bottom: 1px solid #111827;
+    font-size: 12.5px; color: #cbd5e1; line-height: 1.5;
+  }
+
+  td.year { color: #475569; font-family: 'Courier New', monospace; font-size: 12px; }
+  td.name a {
+    color: #60a5fa; text-decoration: none;
+    font-weight: 700; font-size: 13px;
+  }
+  td.name a:hover { text-decoration: underline; }
+  td.citation { font-family: 'Courier New', monospace; font-size: 11px; color: #64748b; }
+  td.focus { color: #94a3b8; font-size: 12px; }
+  td.sponsor { color: #94a3b8; font-size: 12px; }
+  td.gaps { font-family: 'Courier New', monospace; font-size: 11px; color: #7dd3fc; line-height: 1.7; }
+  td.toggle { text-align: center; color: #334155; font-size: 16px; }
+  tr.data-row.open td.toggle { color: #60a5fa; }
+
+  /* Expand row */
+  tr.expand-row { display: none; }
+  tr.expand-row.visible { display: table-row; }
+  tr.expand-row td {
+    padding: 0 14px 20px 14px;
+    background: #0d1930;
+    border-bottom: 1px solid #1e293b;
+  }
+  .expand-inner {
+    margin-top: 12px; padding: 16px 20px;
+    border-radius: 6px; background: #060c1c;
+    border-left: 3px solid #3b82f6;
+  }
+  .expand-label {
+    font-size: 10px; color: #334155;
+    text-transform: uppercase; letter-spacing: .12em;
+    margin-bottom: 8px; font-family: 'Courier New', monospace;
+    font-weight: 700;
+  }
+  .expand-text {
+    font-size: 13.5px; color: #cbd5e1;
+    line-height: 1.8; font-style: italic; margin-bottom: 12px;
+  }
+  .expand-meta {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-size: 12px; border-top: 1px solid #1e293b; padding-top: 10px;
+  }
+  .expand-meta .lbl { color: #475569; }
+  .expand-meta .val { color: #94a3b8; font-family: 'Courier New', monospace; }
+  .expand-meta a { color: #60a5fa; }
+
+  /* Badges */
+  .badge-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .badge-status .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .s-dead    { background:#3f0a0a; border-color:#7f1d1d; color:#fca5a5; }
+  .s-dead .dot { background:#ef4444; }
+  .s-pending { background:#3f2a00; border-color:#78350f; color:#fcd34d; }
+  .s-pending .dot { background:#f59e0b; }
+  .s-inforce { background:#052e16; border-color:#14532d; color:#86efac; }
+  .s-inforce .dot { background:#22c55e; }
+  .s-delayed { background:#0c1a3f; border-color:#1e3a8a; color:#93c5fd; }
+  .s-delayed .dot { background:#3b82f6; }
+
+  .badge-juris {
+    display: inline-block; padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    white-space: nowrap; border: 1px solid transparent;
+  }
+  .j-fed   { background:#1e3a5f; color:#bfdbfe; border-color:#1e40af44; }
+  .j-cal   { background:#3b0764; color:#e9d5ff; border-color:#7e22ce44; }
+  .j-tn    { background:#451a03; color:#fed7aa; border-color:#92400e44; }
+  .j-co    { background:#052e16; color:#bbf7d0; border-color:#15803d44; }
+  .j-eu    { background:#1e3a80; color:#bfdbfe; border-color:#1d4ed844; }
+  .j-uk    { background:#1c2951; color:#c7d2fe; border-color:#4338ca44; }
+  .j-ca    { background:#4c0519; color:#fecdd3; border-color:#be123c44; }
+  .j-jp    { background:#450a0a; color:#fecaca; border-color:#b91c1c44; }
+
+  .empty-row td {
+    padding: 48px; text-align: center;
+    color: #334155; font-size: 14px; font-style: italic;
+  }
+
+  .footer-note {
+    margin-top: 14px; font-size: 11px;
+    color: #1e293b; font-style: italic;
+    font-family: 'Courier New', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">McCabe &amp; McCabe — Disclosure Without Rights v14</div>
+  <h1>AI Training Data Legislation Tracker</h1>
+  <p class="subtitle">19 Federal, State &amp; Foreign Laws/Bills cross-referenced to the CLEAR Act structural gaps (A–G) and proposed reforms (1–7)</p>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="🔍  Search legislation, sponsors, gaps, relevance…" oninput="render()"/>
+    <select id="fJuris" onchange="render()"><option value="All">Jurisdiction: All</option></select>
+    <select id="fStatus" onchange="render()">
+      <option value="All">Status: All</option>
+      <option value="Dead">Status: Dead</option>
+      <option value="Pending">Status: Pending</option>
+      <option value="In Effect">Status: In Effect</option>
+      <option value="Delayed">Status: Delayed</option>
+    </select>
+    <select id="fFocus" onchange="render()"><option value="All">Focus: All</option></select>
+    <div class="count"><span id="countNum">0</span> / 19 items</div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="year"  onclick="sortBy('year')"  style="width:58px">Year <span class="sort-icon">⇅</span></th>
+          <th data-col="name"  onclick="sortBy('name')"  style="width:220px">Legislation <span class="sort-icon">⇅</span></th>
+          <th data-col="citation" onclick="sortBy('citation')" style="width:165px">Citation <span class="sort-icon">⇅</span></th>
+          <th data-col="jurisdiction" onclick="sortBy('jurisdiction')" style="width:165px">Jurisdiction <span class="sort-icon">⇅</span></th>
+          <th data-col="focus" onclick="sortBy('focus')" style="width:180px">Focus Area <span class="sort-icon">⇅</span></th>
+          <th data-col="status" onclick="sortBy('status')" style="width:110px">Status <span class="sort-icon">⇅</span></th>
+          <th data-col="sponsor" onclick="sortBy('sponsor')" style="width:185px">Sponsor <span class="sort-icon">⇅</span></th>
+          <th data-col="proposalAddressed" onclick="sortBy('proposalAddressed')" style="width:195px">Gaps / Proposals <span class="sort-icon">⇅</span></th>
+          <th style="width:46px; cursor:default; text-align:center">+</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <p class="footer-note">Click any row to expand the full essay relevance note. Click column headers to sort. Gap and Proposal references correspond to Parts IV and V of <em>Disclosure Without Rights</em> v14.</p>
+</div>
+
+<script>
+const DATA = [
+  {
+    id:1, year:2024, name:"Generative AI Copyright Disclosure Act of 2024",
+    citation:"H.R. 7913, 118th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Training Data Disclosure", status:"Dead",
+    sponsor:"Rep. Adam Schiff (D-CA)",
+    essayRelevance:"Direct predecessor to CLEAR Act. Carries the same undefined 'sufficiently detailed summary' disclosure standard. The Essay's Gap A critique — that the key term is entirely undefined and leaves the bill's practical effectiveness unknowable at enactment — applies equally to both bills. The CLEAR Act is Schiff's direct successor, now introduced in the Senate.",
+    proposalAddressed:"Gap A (Undefined Disclosure Standard)",
+    link:"https://www.congress.gov/bill/118th-congress/house-bill/7913"
+  },
+  {
+    id:2, year:2024, name:"TRAIN Act (118th Congress — Senate)",
+    citation:"S. 5379, 118th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Training Data Access / Subpoena", status:"Dead",
+    sponsor:"Sen. Peter Welch (D-VT)",
+    essayRelevance:"Demand-side subpoena mechanism addressing the same evidentiary bottleneck the Essay identifies in Part II. Creates a rebuttable presumption of copying for developer noncompliance — the civil-procedure analogue of Proposal 6 (criminal liability for record destruction). Addresses the evidentiary bottleneck without supplying the proactive provenance infrastructure Proposal 1 requires.",
+    proposalAddressed:"Gap E (One-Way Transformation); Proposal 6 (partial)",
+    link:"https://www.congress.gov/bill/118th-congress/senate-bill/5379"
+  },
+  {
+    id:3, year:2025, name:"TRAIN Act (119th Congress — Senate)",
+    citation:"S. 2455, 119th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Training Data Access / Subpoena", status:"Pending",
+    sponsor:"Sen. Welch, Blackburn, Hawley, Schiff",
+    essayRelevance:"Live companion bill to the CLEAR Act in the current Congress. Addresses the evidentiary bottleneck through a demand-side subpoena mechanism but lacks the provenance infrastructure (Proposal 1), confidentiality protections (Proposal 3), and use remedies (Proposal 7) that the Essay argues are necessary for a complete compliance architecture.",
+    proposalAddressed:"Gap E; Proposal 6 (partial)",
+    link:"https://www.congress.gov/bill/119th-congress/senate-bill/2455"
+  },
+  {
+    id:4, year:2026, name:"TRAIN Act (119th Congress — House)",
+    citation:"H.R. 7209, 119th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Training Data Access / Subpoena", status:"Pending",
+    sponsor:"Rep. Madeleine Dean (D-PA); Rep. Nathaniel Moran (R-TX)",
+    essayRelevance:"Bipartisan House companion to S. 2455. Same subpoena mechanism with rebuttable-presumption enforcement for noncompliance. Validates the Essay's core argument that disclosure alone is insufficient without verification infrastructure — the TRAIN Act's subpoena mechanism is an attempt to force production of records the CLEAR Act assumes exist but does not require developers to create.",
+    proposalAddressed:"Gap E; Proposal 6 (partial)",
+    link:"https://www.congress.gov/bill/119th-congress/house-bill/7209"
+  },
+  {
+    id:5, year:2023, name:"AI Foundation Model Transparency Act",
+    citation:"H.R. 6881, 118th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Training Data Disclosure / FTC Rulemaking", status:"Dead",
+    sponsor:"Rep. Anna Eshoo (D-CA); Rep. Don Beyer (D-VA)",
+    essayRelevance:"FTC-centered alternative to the Copyright Office-centered disclosure model the CLEAR Act adopts. Directly relevant to Gap F (institutional capacity): raises the question of whether the FTC — with independent rulemaking authority, enforcement staff, and subpoena power — is better positioned than the Copyright Office to administer a training-data compliance regime.",
+    proposalAddressed:"Gap F (Institutional Capacity)",
+    link:"https://www.congress.gov/bill/118th-congress/house-bill/6881"
+  },
+  {
+    id:6, year:2025, name:"AI Accountability and Personal Data Protection Act",
+    citation:"119th Cong. (July 2025)", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Consent-Based Training Prohibition", status:"Pending",
+    sponsor:"Sen. Josh Hawley (R-MO); Sen. Richard Blumenthal (D-CT)",
+    essayRelevance:"Consent-based approach that would effectively render the fair use defense unavailable for AI training without explicit consent. Contrasts with the Essay's transparency-first architecture: rather than creating disclosure obligations, it prohibits unauthorized training use entirely. Would resolve Gap A by replacing disclosure with prohibition, and Gap C by creating a direct cause of action for the underlying use.",
+    proposalAddressed:"Gap A; Gap C (Remedies — consent-based approach)",
+    link:"https://www.millercanfield.com/resources-senators-introduce-legislation-to-curb-use-of-personal-data-and-copyrighted-works-for-gen-ai-training.html"
+  },
+  {
+    id:7, year:2024, name:"NO FAKES Act",
+    citation:"118th–119th Cong. (multiple sessions)", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Digital Replicas / Right of Publicity", status:"Pending",
+    sponsor:"Bipartisan Senate coalition",
+    essayRelevance:"Addresses AI output exploitation of voices and likenesses — the output side of the AI value chain. The Essay's Shadow Derivatives framework (Part II.D) connects training-input ingestion to output-side exploitation; the NO FAKES Act addresses the downstream harm the CLEAR Act's transparency mandate alone cannot reach. Together the two bills cover both ends of the value chain the Essay maps.",
+    proposalAddressed:"Gap A (Absence of Use Remedies); Proposal 7 (output-side dimension)",
+    link:"https://www.recordingacademy.com/advocacy/news/no-fakes-act-introduced-in-the-senate"
+  },
+  {
+    id:8, year:2024, name:"No AI FRAUD Act",
+    citation:"H.R. (2024), 118th Cong.", jurisdiction:"Federal (US)", type:"Federal Bill",
+    focus:"Digital Replicas / Right of Publicity", status:"Dead",
+    sponsor:"Bipartisan House coalition",
+    essayRelevance:"House complement to the NO FAKES Act. Addresses output-side exploitation of performers' identities. Illustrates a key point in the Essay's framework: even output-side remedies require provenance infrastructure to trace which training inputs produced which infringing outputs — the evidentiary bottleneck the CLEAR Act is meant to address.",
+    proposalAddressed:"Gap A (Absence of Use Remedies)",
+    link:"https://judiciary.house.gov/sites/evo-subsites/republicans-judiciary.house.gov/files/evo-media-document/no-ai-fraud-act-one-pager.pdf"
+  },
+  {
+    id:9, year:2025, name:"Executive Order: National Framework for AI",
+    citation:"Exec. Order, Dec. 11, 2025", jurisdiction:"Federal (US)", type:"Executive Action",
+    focus:"Federal Preemption of State AI Laws", status:"In Effect",
+    sponsor:"President Donald Trump",
+    essayRelevance:"Signals federal intent to preempt state AI laws including CA AB 2013 and AB 412, creating uncertainty for the state-law landscape the Essay maps in Part III.F. The 'minimally burdensome' compliance standard the EO mandates directly conflicts with the Essay's revenue-indexed penalty proposal (Proposal 5) and its tiered audit requirements (Proposal 2).",
+    proposalAddressed:"Gap F (Institutional Capacity); Gap C (Remedies — preemption risk)",
+    link:"https://www.whitehouse.gov/presidential-actions/2025/12/establishing-a-national-framework-for-artificial-intelligence/"
+  },
+  {
+    id:10, year:2025, name:"California AI Copyright Transparency Act",
+    citation:"A.B. 412, Cal. (2025)", jurisdiction:"State — California", type:"State Bill",
+    focus:"Training Data Disclosure / TDVR Query Tool", status:"Pending",
+    sponsor:"Assemblywoman Rebecca Bauer-Kahan (D)",
+    essayRelevance:"Closest existing legislative analogue to Essay's Proposal 3 (confidential-but-queryable records). The bill's Training Data Verification Request (TDVR) tool — requiring developers to allow individual rights holders to query whether their specific works were used — directly tracks Proposal 3's query-based access design. Does not supply mandatory provenance infrastructure (Proposal 1) or independent audit verification (Proposal 2).",
+    proposalAddressed:"Proposal 3 (Confidential-but-Queryable); Gap A",
+    link:"https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202520260AB412"
+  },
+  {
+    id:11, year:2024, name:"CA Generative AI Training Data Transparency Act",
+    citation:"A.B. 2013, Cal. (2024)", jurisdiction:"State — California", type:"State Law (Enacted)",
+    focus:"Training Data Disclosure (Website Posting)", status:"In Effect",
+    sponsor:"Assemblywoman Rebecca Bauer-Kahan (D)",
+    essayRelevance:"First enacted U.S. training-data transparency law. Requires only a 'high-level summary' posted on a developer's website — no Copyright Office filing, no rights-holder query mechanism, no penalty enforceable by rights holders. Effective January 1, 2026. The Essay's Gap A critique applies in full: undefined standard, no verification infrastructure, no use remedies. Demonstrates in real-world operation the 'compliance theater' the Essay warns the CLEAR Act risks producing.",
+    proposalAddressed:"Gap A; Gap B; Gap C",
+    link:"https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202320240AB2013"
+  },
+  {
+    id:12, year:2024, name:"California AI Transparency Act",
+    citation:"S.B. 942, Cal. (2024)", jurisdiction:"State — California", type:"State Law (Enacted)",
+    focus:"AI Output Disclosure / Content Labeling", status:"In Effect",
+    sponsor:"Sen. Josh Becker (D)",
+    essayRelevance:"Output-side companion to AB 2013. Requires large generative AI providers to label AI-generated content and provide a detection tool. Relevant to the Essay's value-chain analysis: a complete accountability regime must address both training inputs (AB 2013 / CLEAR Act) and AI-generated outputs (SB 942 / NO FAKES Act). Effective January 1, 2026.",
+    proposalAddressed:"Gap A (Absence of Use Remedies — output dimension)",
+    link:"https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202320240SB942"
+  },
+  {
+    id:13, year:2024, name:"Tennessee ELVIS Act",
+    citation:"Tenn. Code Ann. § 47-25-1101 (2024)", jurisdiction:"State — Tennessee", type:"State Law (Enacted)",
+    focus:"Right of Publicity / Voice Cloning", status:"In Effect",
+    sponsor:"Gov. Bill Lee; Sen. Jack Johnson; Rep. William Lamberth",
+    essayRelevance:"First state law explicitly prohibiting unauthorized AI voice cloning. Addresses output-side exploitation of performers' identities. Relevant to the Essay's Part II.B discussion of state law preemption risks under 17 U.S.C. § 301 — illustrates the structural limits of state-only approaches to enforcement problems the Essay argues require a federal legislative solution.",
+    proposalAddressed:"Gap A (Absence of Use Remedies); Part II.B state preemption context",
+    link:"https://www.capitol.tn.gov/Bills/113/Bill/HB2091.pdf"
+  },
+  {
+    id:14, year:2024, name:"Colorado Artificial Intelligence Act",
+    citation:"S.B. 24-205, Colo. (2024)", jurisdiction:"State — Colorado", type:"State Law (Enacted)",
+    focus:"High-Risk AI / Algorithmic Bias / Tiered Compliance", status:"Delayed",
+    sponsor:"Sen. Robert Rodriguez (D)",
+    essayRelevance:"First broad state AI accountability law using a tiered, risk-based compliance structure — the state-law analogue of Proposal 2's Tier 1 (independent audit) / Tier 2 (self-certification) structure calibrated by scale. Implementation delayed to June 30, 2026. The federal preemption EO (item 9) cites it as the primary example of burdensome state regulation.",
+    proposalAddressed:"Proposal 2 (Tiered Verification — structural analogy)",
+    link:"https://leg.colorado.gov/bills/sb24-205"
+  },
+  {
+    id:15, year:2024, name:"EU Artificial Intelligence Act",
+    citation:"Regulation (EU) 2024/1689", jurisdiction:"Foreign — European Union", type:"Enacted Regulation",
+    focus:"Comprehensive AI Governance / GPAI Training Data Transparency", status:"In Effect",
+    sponsor:"European Commission / Parliament / Council",
+    essayRelevance:"Primary foreign comparator throughout the Essay. Supplies what the CLEAR Act omits: a mandatory standardized disclosure template (Proposal 4), revenue-indexed fines up to 3% of global annual turnover (Proposal 5), and a dedicated AI Office with enforcement authority (Gap F). GPAI transparency obligations effective August 2, 2025. Essay's Proposals 4 and 5 are in effect recommendations that Congress adopt the EU model's superior design choices.",
+    proposalAddressed:"Gap A; Gap C; Gap F; Proposals 4, 5",
+    link:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"
+  },
+  {
+    id:16, year:2019, name:"EU Digital Single Market Copyright Directive",
+    citation:"Directive (EU) 2019/790, Arts. 3–4", jurisdiction:"Foreign — European Union", type:"Enacted Directive",
+    focus:"Text-and-Data Mining Exception / Opt-Out Rights", status:"In Effect",
+    sponsor:"European Commission / Parliament / Council",
+    essayRelevance:"Establishes the commercial TDM exception with rights-holder opt-out that is the direct legislative precursor to Essay's Proposal 7 (prospective opt-out mechanism). Article 4 allows TDM for commercial purposes unless the rights holder has proactively reserved their rights. The Essay proposes adapting this opt-out model to U.S. law as the forward-looking agency mechanism for rights holders.",
+    proposalAddressed:"Proposal 7 (Prospective Opt-Out)",
+    link:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L0790"
+  },
+  {
+    id:17, year:2024, name:"UK Copyright and AI Consultation",
+    citation:"UK IPO Consultation (Dec. 2024 – Feb. 2025)", jurisdiction:"Foreign — United Kingdom", type:"Regulatory Consultation",
+    focus:"TDM Exception / Opt-Out / Training Data Transparency", status:"Pending",
+    sponsor:"UK Intellectual Property Office / DSIT",
+    essayRelevance:"Proposes importing the EU DSM Directive's commercial TDM exception with opt-out, applicable to AI training. Directly relevant to Essay's Proposal 7 and Part III.F comparative analysis. The UK consultation illustrates a structural gap the Essay identifies: opt-out rights are unenforceable without mandatory provenance infrastructure (Proposal 1) — developers cannot honor opt-outs for works they have not catalogued.",
+    proposalAddressed:"Proposal 7 (Prospective Opt-Out); Proposal 1 (necessary precondition)",
+    link:"https://www.gov.uk/government/consultations/copyright-and-artificial-intelligence"
+  },
+  {
+    id:18, year:2022, name:"Canada Artificial Intelligence and Data Act (AIDA)",
+    citation:"Bill C-27, Digital Charter Implementation Act, 2022", jurisdiction:"Foreign — Canada", type:"Federal Bill",
+    focus:"Comprehensive AI Governance / High-Impact AI Systems", status:"Dead",
+    sponsor:"Minister of Innovation, Science and Industry",
+    essayRelevance:"Cautionary international precedent for the Essay's Gap F analysis (institutional capacity). AIDA failed in part because it concentrated regulatory authority in a single ministry without independent enforcement, subpoena power, or budgetary autonomy — precisely the structural deficiencies the Essay identifies in the Copyright Office's current posture under the CLEAR Act. Died when Parliament was prorogued January 5, 2025.",
+    proposalAddressed:"Gap F (Institutional Capacity — cautionary precedent)",
+    link:"https://ised-isde.canada.ca/site/innovation-better-canada/en/artificial-intelligence-and-data-act"
+  },
+  {
+    id:19, year:2018, name:"Japan Text-and-Data-Mining Exception",
+    citation:"Japan Copyright Act Art. 30-4 (2018, amended 2019)", jurisdiction:"Foreign — Japan", type:"Enacted Law",
+    focus:"Permissive TDM Exception (No Consent Required)", status:"In Effect",
+    sponsor:"Japanese Diet / Agency for Cultural Affairs",
+    essayRelevance:"Represents the permissive regulatory extreme the Essay cites in Part III.F: AI training on copyrighted works is permitted without consent or compensation unless use 'unreasonably prejudices' rights holders. Strongest counterargument to the Essay's compliance architecture proposals — if U.S. courts or Congress adopt a Japan-style approach, mandatory provenance infrastructure and compensation tiers become voluntary rather than legally required.",
+    proposalAddressed:"Part III.F comparative analysis; fair use resolution context for all Proposals",
+    link:"https://www.bunka.go.jp/english/policy/copyright/"
+  }
+];
+
+// Populate filter dropdowns
+(function(){
+  const jurisSet = [...new Set(DATA.map(d=>d.jurisdiction))];
+  const focusSet = [...new Set(DATA.map(d=>d.focus))];
+  const jSel = document.getElementById('fJuris');
+  const fSel = document.getElementById('fFocus');
+  jurisSet.forEach(j=>{ const o=document.createElement('option');o.value=j;o.textContent='Jurisdiction: '+j;jSel.appendChild(o); });
+  focusSet.forEach(f=>{ const o=document.createElement('option');o.value=f;o.textContent='Focus: '+f;fSel.appendChild(o); });
+})();
+
+let sortCol = 'year';
+let sortDir = 'desc';
+let openRow = null;
+
+function sortBy(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  // update header icons
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('active');
+    const si = th.querySelector('.sort-icon');
+    if (si) si.textContent = '⇅';
+  });
+  const ths = document.querySelectorAll('thead th');
+  const cols = ['year','name','citation','jurisdiction','focus','status','sponsor','proposalAddressed'];
+  const idx = cols.indexOf(col);
+  if (idx >= 0 && ths[idx]) {
+    ths[idx].classList.add('active');
+    const si = ths[idx].querySelector('.sort-icon');
+    if (si) si.textContent = sortDir === 'asc' ? '▲' : '▼';
+  }
+  render();
+}
+
+function getStatusClass(s) {
+  if (s === 'Dead') return 's-dead';
+  if (s.startsWith('In Effect')) return 's-inforce';
+  if (s.startsWith('Delayed')) return 's-delayed';
+  return 's-pending';
+}
+function getStatusLabel(s) {
+  if (s.startsWith('In Effect')) return 'In Effect';
+  if (s.startsWith('Delayed')) return 'Delayed';
+  return s;
+}
+function getJurisClass(j) {
+  if (j==='Federal (US)') return 'j-fed';
+  if (j==='State — California') return 'j-cal';
+  if (j==='State — Tennessee') return 'j-tn';
+  if (j==='State — Colorado') return 'j-co';
+  if (j.includes('European')) return 'j-eu';
+  if (j.includes('United Kingdom')) return 'j-uk';
+  if (j.includes('Canada')) return 'j-ca';
+  if (j.includes('Japan')) return 'j-jp';
+  return 'j-fed';
+}
+
+function statusMatch(s, f) {
+  if (f==='All') return true;
+  if (f==='In Effect') return s.startsWith('In Effect');
+  if (f==='Delayed') return s.startsWith('Delayed');
+  return s === f;
+}
+
+function render() {
+  const q    = document.getElementById('search').value.toLowerCase();
+  const fJ   = document.getElementById('fJuris').value;
+  const fS   = document.getElementById('fStatus').value;
+  const fF   = document.getElementById('fFocus').value;
+
+  let rows = DATA.filter(d => {
+    const fields = [d.name,d.citation,d.sponsor,d.essayRelevance,d.proposalAddressed,d.focus,d.jurisdiction,String(d.year)];
+    const matchQ = !q || fields.some(f=>f.toLowerCase().includes(q));
+    return matchQ && (fJ==='All'||d.jurisdiction===fJ) && statusMatch(d.status,fS) && (fF==='All'||d.focus===fF);
+  });
+
+  rows.sort((a,b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (typeof va==='string') { va=va.toLowerCase(); vb=vb.toLowerCase(); }
+    if (va<vb) return sortDir==='asc'?-1:1;
+    if (va>vb) return sortDir==='asc'?1:-1;
+    return 0;
+  });
+
+  document.getElementById('countNum').textContent = rows.length;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  if (rows.length===0) {
+    const tr = document.createElement('tr');
+    tr.className='empty-row';
+    tr.innerHTML='<td colspan="9">No legislation matches your current filters.</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+
+  rows.forEach(d => {
+    const sc = getStatusClass(d.status);
+    const sl = getStatusLabel(d.status);
+    const jc = getJurisClass(d.jurisdiction);
+    const isOpen = openRow === d.id;
+
+    // Data row
+    const tr = document.createElement('tr');
+    tr.className = 'data-row' + (isOpen?' open':'');
+    tr.dataset.id = d.id;
+    tr.innerHTML = `
+      <td class="year">${d.year}</td>
+      <td class="name"><a href="${d.link}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${d.name}</a></td>
+      <td class="citation">${d.citation}</td>
+      <td><span class="badge-juris ${jc}">${d.jurisdiction}</span></td>
+      <td class="focus">${d.focus}</td>
+      <td><span class="badge-status ${sc}"><span class="dot"></span>${sl}</span></td>
+      <td class="sponsor">${d.sponsor}</td>
+      <td class="gaps">${d.proposalAddressed}</td>
+      <td class="toggle">${isOpen?'▲':'▼'}</td>
+    `;
+    tr.addEventListener('click', () => toggleRow(d.id));
+    tbody.appendChild(tr);
+
+    // Expand row
+    const er = document.createElement('tr');
+    er.className = 'expand-row' + (isOpen?' visible':'');
+    er.dataset.id = 'exp-'+d.id;
+    er.innerHTML = `
+      <td colspan="9">
+        <div class="expand-inner">
+          <div class="expand-label">Essay Relevance — <em>Disclosure Without Rights</em> (McCabe &amp; McCabe, 2026)</div>
+          <div class="expand-text">${d.essayRelevance}</div>
+          <div class="expand-meta">
+            <span><span class="lbl">Full Status: </span><span class="val">${d.status}</span></span>
+            <span><span class="lbl">Citation: </span><span class="val">${d.citation}</span></span>
+            <span><span class="lbl">Type: </span><span class="val">${d.type}</span></span>
+            <a href="${d.link}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">View Source →</a>
+          </div>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(er);
+  });
+}
+
+function toggleRow(id) {
+  openRow = openRow === id ? null : id;
+  render();
+}
+
+// Initial render
+render();
+// Set initial sort icon
+document.querySelectorAll('thead th')[0].classList.add('active');
+document.querySelectorAll('thead th')[0].querySelector('.sort-icon').textContent = '▼';
+</script>
+</body>
+</html>
